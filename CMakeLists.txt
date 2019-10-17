@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.4)
-project(QtOSGExample)
-
+project(BerserkBalls)
 FIND_PACKAGE(Qt5Widgets)
 FIND_PACKAGE(Qt5Gui)
 FIND_PACKAGE( OpenSceneGraph REQUIRED COMPONENTS osgDB osgGA osgUtil osgViewer osgText)
@@ -23,12 +22,37 @@ SET(MYSOURCE
     osgwidget.cpp
     )
 
+IF (NOT TARGET gtest)
+    # Prevent GoogleTest from overriding our compiler/linker options
+    # when building with Visual Studio
+    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+
+    add_subdirectory(googletest)
+ENDIF()
+
+add_library(physicsVector STATIC
+    createvector.cpp
+    createvector.h
+    itsphysics.cpp
+    itsphysics.h
+    )
+add_library(objectPosition STATIC
+    objectposition.cpp
+    objectposition.h
+    )
+
+add_executable(myTests
+    physicsUnitTests.cpp
+)
+target_link_libraries(myTests physicsVector objectPosition gtest gtest_main)
+
 add_executable(${PROJECT_NAME}
     ${MYSOURCE}
     )
-
 target_link_libraries(${PROJECT_NAME}
     ${OPENSCENEGRAPH_LIBRARIES}	
     Qt5::Widgets
     Qt5::Gui
+    objectPosition
+    physicsVector
 )
