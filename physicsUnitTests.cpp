@@ -9,9 +9,9 @@
 
 void expect_equal_stdvectors(std::vector<double> mVector, std::vector<double> mCheckVector)
 {
-    EXPECT_EQ(mVector[0],mCheckVector[0]);
-    EXPECT_EQ(mVector[1],mCheckVector[1]);
-    EXPECT_EQ(mVector[2],mCheckVector[2]);
+    EXPECT_DOUBLE_EQ(mVector[0],mCheckVector[0]);
+    EXPECT_DOUBLE_EQ(mVector[1],mCheckVector[1]);
+    EXPECT_DOUBLE_EQ(mVector[2],mCheckVector[2]);
 }
 
 
@@ -20,7 +20,7 @@ TEST(createAnObject, whenObjectCreated_StartAtOrigin)
 {
     objectPosition currentPosition;
     std::vector<double> checkPosition{0,0,0};
-    expect_equal_stdvectors(currentPosition.return_position_vector(),checkPosition);
+    expect_equal_stdvectors(currentPosition.get_position(),checkPosition);
 }
 TEST(createObjectVelcity, whenObjectCreated_ExpectVelocity)
 {
@@ -38,7 +38,7 @@ TEST(updateObjectVelocity, whenVelocityChanges_ExpectNewVelocity)
 TEST(createObjectAcceleration, whenObjectCreated_ExpectAcceleration)
 {
     objectPosition currentPosition;
-    std::vector<double> checkAcceleration{0,0,-9.81};
+    std::vector<double> checkAcceleration{0,0,-9.8};
     expect_equal_stdvectors(currentPosition.get_acceleration(),checkAcceleration);
 }
 TEST(updateObjectAcceleration, whenAccelerationChanges_ExpectNewAcceleration)
@@ -51,7 +51,7 @@ TEST(updateObjectAcceleration, whenAccelerationChanges_ExpectNewAcceleration)
 TEST(createObjectDrag, whenObjectCreated_ExpectDrag)
 {
     objectPosition currentPosition;
-    std::vector<double> checkDrag{-0.5,-0.5,-0.5};
+    std::vector<double> checkDrag{0.0,0.0,0.0};
     expect_equal_stdvectors(currentPosition.get_drag(),checkDrag);
 }
 TEST(updateObjectDrag, whenDragChanges_ExpectNewDrag)
@@ -61,24 +61,137 @@ TEST(updateObjectDrag, whenDragChanges_ExpectNewDrag)
     currentPosition.update_drag(checkDrag);
     expect_equal_stdvectors(currentPosition.get_drag(),checkDrag);
 }
-TEST(updateObjectPosition, whenObjectMoves_ExpectNewPosition)
+TEST(createObjectMass, whenObjectCreated_ExpectMass)
 {
-
+    objectPosition currentPosition;
+    double checkMass{5.0};
+    EXPECT_DOUBLE_EQ(currentPosition.get_mass(),checkMass);
+}
+TEST(updateObjectMass, whenMassChanges_ExpectNewMass)
+{
+    objectPosition currentPosition;
+    double checkMass{66.0};
+    currentPosition.update_mass(checkMass);
+    EXPECT_DOUBLE_EQ(currentPosition.get_mass(),checkMass);
+}
+TEST(avoidZeroMass,whenMassSetToZero_ExpectMassEqualOne)
+{
+    objectPosition currentPosition;
+    double newMass{0.0};
+    double checkMass{1.0};
+    currentPosition.update_mass(newMass);
+    EXPECT_DOUBLE_EQ(currentPosition.get_mass(),checkMass);
+}
+TEST(avoidNearZeroMass,whenMassSetToZero_ExpectMassEqualOne)
+{
+    objectPosition currentPosition;
+    double newMass{0.00009};
+    double checkMass{1.0};
+    currentPosition.update_mass(newMass);
+    EXPECT_DOUBLE_EQ(currentPosition.get_mass(),checkMass);
+}
+TEST(avoidNegativeMass,whenMassSetToNegative_ExpectMassEqualAbsNewMass)
+{
+    objectPosition currentPosition;
+    double newMass{-66.0};
+    double checkMass{66.0};
+    currentPosition.update_mass(newMass);
+    EXPECT_DOUBLE_EQ(currentPosition.get_mass(),checkMass);
+}
+TEST(createObjectTimeStep, whenObjectCreated_ExpectTimeStep)
+{
+    objectPosition currentPosition;
+    double checkTimeStep{1.0/30.0};
+    EXPECT_DOUBLE_EQ(currentPosition.get_timeStep(),checkTimeStep);
+}
+TEST(updateObjectTimeStep, whenTimeStepChanges_ExpectNewTimeStep)
+{
+    objectPosition currentPosition;
+    double checkTimeStep{1.0/400.0};
+    currentPosition.update_timeStep(checkTimeStep);
+    EXPECT_DOUBLE_EQ(currentPosition.get_timeStep(),checkTimeStep);
 }
 
-
-//TEST(changeInXYZPosition, whenVelocityinXYZ_ExpectXYZChange)
-//{
-//    createVector currentPosition;
-//    createVector currentVelocity;
-//    std::vector<double> updateVelocity{10,10,10};
-//    currentVelocity.redefine_My_Vector(updateVelocity);
-//    double timeStep{1};
-//    createVector newPosition = position_of_object(currentPosition,currentVelocity,timeStep);
-//    std::vector<double> checkNewPosition{10,10,10};
-
-//    EXPECT_EQ(checkNewPosition[0],newPosition.get_value(0));
-//    EXPECT_EQ(checkNewPosition[1],newPosition.get_value(1));
-//    EXPECT_EQ(checkNewPosition[2],newPosition.get_value(2));
-//}
+TEST(updateObjectPositionNoDragNoAccel, whenObjectMoves_ExpectNewPosition)
+{
+    objectPosition currentPosition;
+    std::vector<double> updateVelocity{10.0,10.0,10.0};
+    currentPosition.update_velocity(updateVelocity);
+    std::vector<double> updateAccel{0.0,0.0,0.0};
+    currentPosition.update_acceleration(updateAccel);
+    std::vector<double> updateDrag{0.0,0.0,0.0};
+    currentPosition.update_drag(updateDrag);
+    double timeStep{0.5};
+    currentPosition.update_timeStep(timeStep);
+    currentPosition.update_position();
+    std::vector<double> checkNewPosition{5.0,5.0,5.0};
+    expect_equal_stdvectors(currentPosition.get_position(),checkNewPosition);
+}
+TEST(updateObjectPositionNoDrag, whenObjectMoves_ExpectNewPosition)
+{
+    objectPosition currentPosition;
+    std::vector<double> updateVelocity{10.0,10.0,10.0};
+    currentPosition.update_velocity(updateVelocity);
+    double timeStep{0.5};
+    currentPosition.update_timeStep(timeStep);
+    currentPosition.update_position();
+    std::vector<double> checkNewPosition{5.0,5.0,2.55};
+    expect_equal_stdvectors(currentPosition.get_position(),checkNewPosition);
+}
+TEST(updateObjectPositionPositiveDragNegativeAccel, whenObjectMoves_ExpectNewPosition)
+{
+    objectPosition currentPosition;
+    std::vector<double> updateVelocity{10.0,10.0,10.0};
+    currentPosition.update_velocity(updateVelocity);
+    std::vector<double> updateDrag{1.0,2.0,3.0};
+    currentPosition.update_drag(updateDrag);
+    double timeStep{0.5};
+    currentPosition.update_timeStep(timeStep);
+    currentPosition.update_position();
+    std::vector<double> checkNewPosition{5.05,5.1,2.7};
+    expect_equal_stdvectors(currentPosition.get_position(),checkNewPosition);
+}
+TEST(updateObjectPositionNegativeDragNegativeAccel, whenObjectMoves_ExpectNewPosition)
+{
+    objectPosition currentPosition;
+    std::vector<double> updateVelocity{10.0,10.0,10.0};
+    currentPosition.update_velocity(updateVelocity);
+    std::vector<double> updateDrag{-1.0,-2.0,-3.0};
+    currentPosition.update_drag(updateDrag);
+    double timeStep{0.5};
+    currentPosition.update_timeStep(timeStep);
+    currentPosition.update_position();
+    std::vector<double> checkNewPosition{4.95,4.9,2.4};
+    expect_equal_stdvectors(currentPosition.get_position(),checkNewPosition);
+}
+TEST(updateObjectPositionNegativeDragPositiveAccel, whenObjectMoves_ExpectNewPosition)
+{
+    objectPosition currentPosition;
+    std::vector<double> updateVelocity{10.0,10.0,10.0};
+    currentPosition.update_velocity(updateVelocity);
+    std::vector<double> updateDrag{-1.0,-2.0,-3.0};
+    currentPosition.update_drag(updateDrag);
+    std::vector<double> updateAccel{1.0,2.0,3.0};
+    currentPosition.update_acceleration(updateAccel);
+    double timeStep{0.5};
+    currentPosition.update_timeStep(timeStep);
+    currentPosition.update_position();
+    std::vector<double> checkNewPosition{5.2,5.4,5.6};
+    expect_equal_stdvectors(currentPosition.get_position(),checkNewPosition);
+}
+TEST(updateObjectPositionMixedSignDragMixedSignAccel, whenObjectMoves_ExpectNewPosition)
+{
+    objectPosition currentPosition;
+    std::vector<double> updateVelocity{10.0,10.0,10.0};
+    currentPosition.update_velocity(updateVelocity);
+    std::vector<double> updateDrag{10.0,-2.0,-3.0};
+    currentPosition.update_drag(updateDrag);
+    std::vector<double> updateAccel{100.0,-600.0,-9.8};
+    currentPosition.update_acceleration(updateAccel);
+    double timeStep{0.5};
+    currentPosition.update_timeStep(timeStep);
+    currentPosition.update_position();
+    std::vector<double> checkNewPosition{30.5,-145.1,2.4};
+    expect_equal_stdvectors(currentPosition.get_position(),checkNewPosition);
+}
 

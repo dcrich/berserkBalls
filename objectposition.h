@@ -7,7 +7,8 @@ class objectPosition
 {
 public:
     objectPosition();
-    std::vector<double> return_position_vector();
+    void update_position();
+    std::vector<double> get_position();
     std::vector<double> get_velocity();
     void update_velocity(std::vector<double> newVelocity);
     std::vector<double> get_acceleration();
@@ -16,16 +17,17 @@ public:
     void update_drag(std::vector<double> newDrag);
     double get_mass();
     void update_mass(double newMass);
+    double get_timeStep();
+    void update_timeStep(double newMass);
 
 private:
     createVector currentPosition;
-    std::vector<double> currentVelocity{6,0,6};
-    std::vector<double> currentAcceleration{0,0,-9.81};
-    std::vector<double> currentDrag{-0.5,-0.5,-0.5};
-    double currentMass{5};
-
-
-
+    createVector formerPosition;
+    createVector currentVelocity;
+    createVector currentAcceleration;
+    createVector currentDrag;
+    double currentMass{5.0}; // add function so sphere volume is based on density and mass
+    double timeStep{1.0/30.0};
 };
 
 #endif // OBJECTPOSITION_H
