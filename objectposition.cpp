@@ -11,12 +11,18 @@ objectPosition::objectPosition()
     currentDrag.redefine_My_Vector({0.0,0.0,0.0});
 }
 
+void objectPosition::first_position()
+{
+    acceleration_of_object(currentAcceleration,currentDrag,currentMass);
+    velocity_of_object(currentVelocity,currentAcceleration,timeStep);
+    formerPosition = currentPosition;
+    position_of_object(currentPosition,currentVelocity,timeStep);
+}
 void objectPosition::update_position()
 {
-    currentAcceleration = acceleration_of_object(currentAcceleration,currentDrag,currentMass);
-    currentVelocity = velocity_of_object(currentVelocity,currentAcceleration,timeStep);
+    velocity_of_object(currentVelocity,currentAcceleration,timeStep);
     formerPosition = currentPosition;
-    currentPosition = position_of_object(currentPosition,currentVelocity,timeStep);
+    position_of_object(currentPosition,currentVelocity,timeStep);
 }
 
 std::vector<double> objectPosition::get_position()
@@ -80,4 +86,10 @@ double objectPosition::get_timeStep()
 void objectPosition::update_timeStep(double newTimeStep)
 {
     timeStep = newTimeStep;
+}
+
+void objectPosition::static_collision()
+{
+    collision_velocity(currentVelocity,coefficientOfRestitution);
+    update_position(); //might cause problems visually if not drawn at the right time
 }

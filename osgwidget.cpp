@@ -25,6 +25,45 @@
 #include <QPainter>
 #include <QWheelEvent>
 
+#include <osg/Geometry>
+#include <osg/PositionAttitudeTransform>
+#include <osg/ShapeDrawable>
+
+osg::Node* create_wireframe_tetrahedron(osg::Vec4 &color, osg::Vec3d &scaleFactor)
+{
+    osg::Vec3Array* v = new osg::Vec3Array;
+    v->resize( 4 );
+    (*v)[0].set( 1.f, 0.f, -.707f );
+    (*v)[1].set(-1.f, 0.f, -.707f );
+    (*v)[2].set(0.f, 1.f, .707f );
+    (*v)[3].set(0.f, -1.f, .707f );
+
+    osg::Geometry* geom = new osg::Geometry;
+    geom->setUseDisplayList( false );
+    geom->setVertexArray( v );
+
+    osg::Vec4Array* c = new osg::Vec4Array;
+    c->push_back( color );
+    geom->setColorArray( c, osg::Array::BIND_OVERALL );
+
+    GLushort idxLines[6] = {0, 3, 1, 3, 2, 3};
+    GLushort idxLoops[3] = {0, 1, 2 };
+
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINES, 6, idxLines ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 3, idxLoops ) );
+
+    osg::Geode* geode = new osg::Geode;
+    geode->addDrawable( geom );
+
+    geode->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED );
+    geode->getOrCreateStateSet()->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
+    osg::PositionAttitudeTransform* transform = new osg::PositionAttitudeTransform;
+    transform->setScale(scaleFactor);
+
+    transform->addChild(geode);
+    return transform;
+}
+
 OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     QOpenGLWidget{ parent,flags },
     mGraphicsWindow{ new osgViewer::GraphicsWindowEmbedded{ this->x(),
@@ -43,7 +82,7 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     osg::Camera* camera = new osg::Camera;
     camera->setViewport( 0, 0, this->width() * pixelRatio, this->height() * pixelRatio );
 
-    camera->setClearColor( osg::Vec4( 0.f, 0.f, .5, 1.f ) );
+    camera->setClearColor( osg::Vec4( 0.25f, 0.1f, 0.4f, 1.f ) );
     camera->setProjectionMatrixAsPerspective( 45.f, aspectRatio, 1.f, 1000.f );
     camera->setGraphicsContext( mGraphicsWindow );
 
@@ -63,12 +102,57 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
 
     osg::Sphere* sphere    = new osg::Sphere( osg::Vec3( 0.f, 0.f, 0.f ), 2.0f );
     osg::ShapeDrawable* sd = new osg::ShapeDrawable( sphere );
-    sd->setColor( osg::Vec4( 1.f, 0.f, 0.f, 1.f ) );
+    sd->setColor( osg::Vec4( 1.f, 1.f, 1.f, .01f ) );
     sd->setName( "Sphere" );
 
     osg::Geode* geode = new osg::Geode;
     geode->addDrawable( sd );
+/////////////
+    osg::Vec4 osgVec4color(1.f, 1.f, 1.f, 1.f);
+    osg::Vec3 osgVec3dscaleFactor(1.f, 1.f, 1.f);
+    osg::Vec3Array* v = new osg::Vec3Array;
+    v->resize( 4 );
+    (*v)[0].set( -10.f, -10.f, 10.f );
+    (*v)[1].set(10.f, -10.f, 10.f );
+    (*v)[2].set(10.f, 10.f, 10.f );
+    (*v)[3].set(-10.f, 10.f, 10.f );
+    (*v)[4].set(-10.f, -10.f, -10.f );
+    (*v)[5].set(10.f, -10.f, -10.f );
+    (*v)[6].set(10.f, 10.f, -10.f );
+    (*v)[7].set(-10.f, 10.f, -10.f );
 
+    osg::Geometry* geom = new osg::Geometry;
+    geom->setUseDisplayList( false );
+    geom->setVertexArray( v );
+
+    osg::Vec4Array* c = new osg::Vec4Array;
+    c->push_back( osgVec4color );
+    geom->setColorArray( c, osg::Array::BIND_OVERALL );
+
+    GLushort idxLines[4] = {0,1,2,3};
+
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINES, 4, idxLines ) );
+
+    osg::Geode* mgeode = new osg::Geode;
+    mgeode->addDrawable( geom );
+
+    mgeode->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED );
+    mgeode->getOrCreateStateSet()->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
+    osg::PositionAttitudeTransform* transform = new osg::PositionAttitudeTransform;
+    transform->setScale(osgVec3dscaleFactor);
+
+    transform->addChild(mgeode);
+    osg::StateSet* mstateSet = mgeode->getOrCreateStateSet();
+    osg::Material* mmaterial = new osg::Material;
+
+    mmaterial->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE );
+
+    mstateSet->setAttributeAndModes( mmaterial, osg::StateAttribute::ON );
+    mstateSet->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
+
+    mRoot->addChild(mgeode);
+
+/////////////
     osg::StateSet* stateSet = geode->getOrCreateStateSet();
     osg::Material* material = new osg::Material;
 
@@ -273,3 +357,5 @@ void OSGWidget::repaint_osg_graphics_after_interaction(QEvent* event)
         break;
     }
 }
+
+
