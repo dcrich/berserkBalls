@@ -20,6 +20,8 @@ SET(MYSOURCE
     mainwindowform.ui
     osgwidget.h
     osgwidget.cpp
+    thespherecreator.cpp
+    thespherecreator.h
     )
 
 IF (NOT TARGET gtest)

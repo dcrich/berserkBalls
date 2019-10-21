@@ -19,6 +19,7 @@ public:
 
   virtual ~OSGWidget();
 protected:
+  void timerEvent(QTimerEvent *);
   virtual void paintEvent( QPaintEvent* paintEvent );
   virtual void paintGL();
   virtual void resizeGL( int width, int height );
@@ -41,6 +42,7 @@ private:
   osg::ref_ptr<osgViewer::CompositeViewer> mViewer;
   osg::ref_ptr<osgViewer::View> mView;
   osg::ref_ptr<osg::Group> mRoot;
+  int mTimerId{0};
 };
 
 #endif
