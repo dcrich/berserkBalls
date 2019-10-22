@@ -24,7 +24,7 @@ void velocity_of_object(createVector &currentVelocity, createVector &acceleratio
         currentVelocity.set_value(i,newVelocityValue);
     }
 }
-
+// overload operators to get rid of loops
 void position_of_object(createVector &currentPosition, createVector &velocity, double &timeStep)
 {
     double newPositionValue;
