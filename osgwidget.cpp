@@ -22,15 +22,17 @@
 #include <QWheelEvent>
 #include <osg/Geometry>
 #include <osg/PositionAttitudeTransform>
-#include <osg/ShapeDrawable>
 #include "objectposition.h"
 
-osg::Vec3d convertPhysicsVectorToVec3d()
+osg::Vec3 convertPhysicsVectorToVec3(std::vector<double> mVector)
 {
-    osg::Vec3d physicsVectorAsVec3d;
-    return physicsVectorAsVec3d;
-}
+    float mX = static_cast<float>(mVector[0]);
+    float mY = static_cast<float>(mVector[1]);
+    float mZ = static_cast<float>(mVector[2]);
+    osg::Vec3 physicsVectorAsVec3(mX,mY,mZ);
 
+    return physicsVectorAsVec3;
+}
 
 class SphereUpdateCallback: public osg::NodeCallback
 {
@@ -44,11 +46,11 @@ public:
         else
             mCount--;
 
-
-        osg::Vec3d newPosition;
-        newPosition = convertPhysicsVectorToVec3d();
+        osg::Vec3d positionValue(0.0,0.0,2.5*mCount+10);
+        osg::Vec3d scaleFactor(mScaleStep*mCount+1.0, 1.0, 1.0);
         osg::PositionAttitudeTransform *pat = dynamic_cast<osg::PositionAttitudeTransform *> (node);
-        pat->setPosition(newPosition);
+        //pat->setScale(scaleFactor);
+        pat->setPosition(positionValue);
 
         traverse(node, nv);
 
@@ -89,10 +91,10 @@ void makeBoundaryBox(osg::Geode* mgeode)
     (*v)[1].set(halfCubeLength, -halfCubeLength, halfCubeLength );
     (*v)[2].set(halfCubeLength, halfCubeLength, halfCubeLength );
     (*v)[3].set(-halfCubeLength, halfCubeLength, halfCubeLength );
-    (*v)[4].set(-halfCubeLength, -halfCubeLength, 0.f );
-    (*v)[5].set(halfCubeLength, -halfCubeLength, 0.f );
-    (*v)[6].set(halfCubeLength, halfCubeLength, 0.f );
-    (*v)[7].set(-halfCubeLength, halfCubeLength, 0.f);
+    (*v)[4].set(-halfCubeLength, -halfCubeLength, -5.f );
+    (*v)[5].set(halfCubeLength, -halfCubeLength, -5.f );
+    (*v)[6].set(halfCubeLength, halfCubeLength, -5.f );
+    (*v)[7].set(-halfCubeLength, halfCubeLength, -5.f);
 
     osg::Geometry* geom = new osg::Geometry;
     geom->setUseDisplayList( false );
@@ -162,12 +164,22 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     mViewer->setThreadingModel( osgViewer::CompositeViewer::SingleThreaded );
     mViewer->realize();
     mView->home();
+
+    //initialize timer
+    double framesPerSecond{30};
+    double timeStep{1.0/framesPerSecond};
+
     //creates sphere
-    osg::Sphere* sphere = new osg::Sphere( osg::Vec3( 0.f, 0.f, 60.f ), 10.0f );
+    objectPosition spherePosition;
+    spherePosition.update_timeStep(timeStep);
+    std::vector<double> startPosition{0,0,100};
+    spherePosition.redefine_position(startPosition);
+    osg::Vec3 spherePositionVec3 = convertPhysicsVectorToVec3(spherePosition.get_position());
+    osg::Sphere* sphere = new osg::Sphere(spherePositionVec3, 10.0f );
     osg::Geode* geode = new osg::Geode;
     makeMainSphere(sphere, geode);
     osg::PositionAttitudeTransform *transform = new osg::PositionAttitudeTransform;
-    transform->setPosition(osg::Vec3( 0.f, 0.f, 0.f ));
+    transform->setPosition(spherePositionVec3);
     transform->setUpdateCallback(new SphereUpdateCallback());
     transform->addChild(geode);
     mRoot->addChild(transform);
@@ -184,8 +196,7 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     this->setMouseTracking( true );
     this->update();
 
-    double framesPerSecond{30};
-    double timeStep{1.0/framesPerSecond};
+    // define length of timer, start timer
     double timerDurationInMilliSeconds{timeStep * 1000};
     mTimerId=startTimer(timerDurationInMilliSeconds);
 
@@ -193,6 +204,8 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
 
 OSGWidget::~OSGWidget()
 {
+    killTimer(mTimerId);
+    delete mViewer;
 }
 void OSGWidget::timerEvent(QTimerEvent *)
 {

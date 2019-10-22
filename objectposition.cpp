@@ -11,6 +11,11 @@ objectPosition::objectPosition()
     currentDrag.redefine_My_Vector({0.0,0.0,0.0});
 }
 
+void objectPosition::redefine_position(std::vector<double> newPosition)
+{
+    currentPosition.redefine_My_Vector(newPosition);
+}
+
 void objectPosition::first_position()
 {
     acceleration_of_object(currentAcceleration,currentDrag,currentMass);

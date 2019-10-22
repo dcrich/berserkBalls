@@ -7,6 +7,7 @@ class objectPosition
 {
 public:
     objectPosition();
+    void redefine_position(std::vector<double> newPosition);
     void first_position();
     void update_position();
     std::vector<double> get_position();
