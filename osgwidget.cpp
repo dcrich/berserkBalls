@@ -51,21 +51,43 @@ public:
         std::vector<double> coordinates {position.get_position()};
         std::vector<double> velocity {position.get_velocity()};
         std::vector<double> coordinatesbottom {0,0,6};
-        if (coordinates[2] > coordinatesbottom[2] )
+//        if (coordinates[2] > coordinatesbottom[2] )
+//        {
+//            position.update_position();
+//            coordinates  = position.get_position();
+//        }
+//        else if (velocity[2] > 0 && coordinates[2] < coordinatesbottom[2])
+//        {
+//            position.update_position();
+//            coordinates  = position.get_position();
+//        }
+//        else
+//        {
+//            position.static_collision();
+//            coordinates = position.get_position();
+//        }
+
+        position.update_position();
+        coordinates  = position.get_position();
+        if (coordinates[0]>500 || coordinates[0]<0)
         {
-            position.update_position();
-            coordinates  = position.get_position();
-        }
-        else if (velocity[2] > 0 && coordinates[2] < coordinatesbottom[2])
-        {
-            position.update_position();
-            coordinates  = position.get_position();
-        }
-        else
-        {
+            position.redefine_position(coordinates);
             position.static_collision();
             coordinates = position.get_position();
         }
+        else if (coordinates[1]>500 || coordinates[1]<0)
+        {
+            position.redefine_position(coordinates);
+            position.static_collision();
+            coordinates = position.get_position();
+        }
+        else if (coordinates[2]>250 || coordinates[2]<0)
+        {
+            position.redefine_position(coordinates);
+            position.static_collision();
+            coordinates = position.get_position();
+        }
+
         osg::Vec3d positionValue {convertPhysicsVectorToVec3(coordinates)};
         osg::PositionAttitudeTransform *pat = dynamic_cast<osg::PositionAttitudeTransform *> (node);
         pat->setPosition(positionValue);
@@ -99,16 +121,16 @@ void makeBoundaryBox(osg::Geode* mgeode)
     osg::Vec4 osgVec4color(1.f, 1.f, 1.f, 1.f);
     osg::Vec3 osgVec3dscaleFactor(1.f, 1.f, 1.f);
     osg::Vec3Array* v = new osg::Vec3Array;
-    float halfCubeLength{100.};
+    float cubeLength{500.};
     v->resize( 4 );
-    (*v)[0].set( -halfCubeLength, -halfCubeLength, halfCubeLength );
-    (*v)[1].set(halfCubeLength, -halfCubeLength, halfCubeLength );
-    (*v)[2].set(halfCubeLength, halfCubeLength, halfCubeLength );
-    (*v)[3].set(-halfCubeLength, halfCubeLength, halfCubeLength );
-    (*v)[4].set(-halfCubeLength, -halfCubeLength, -5.f );
-    (*v)[5].set(halfCubeLength, -halfCubeLength, -5.f );
-    (*v)[6].set(halfCubeLength, halfCubeLength, -5.f );
-    (*v)[7].set(-halfCubeLength, halfCubeLength, -5.f);
+    (*v)[0].set( 0.f, 0.f, cubeLength/2.f );
+    (*v)[1].set(cubeLength, 0.f, cubeLength/2.f );
+    (*v)[2].set(cubeLength, cubeLength, cubeLength/2.f );
+    (*v)[3].set(0.f, cubeLength, cubeLength/2.f);
+    (*v)[4].set(0.f, 0.f, 0.f );
+    (*v)[5].set(cubeLength, 0.f, 0.f );
+    (*v)[6].set(cubeLength, cubeLength, 0.f );
+    (*v)[7].set(0.f, cubeLength, 0.f);
 
     osg::Geometry* geom = new osg::Geometry;
     geom->setUseDisplayList( false );
@@ -172,7 +194,7 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     mView->addEventHandler( new osgViewer::StatsHandler );
     osg::ref_ptr<osgGA::TrackballManipulator> manipulator = new osgGA::TrackballManipulator;
     manipulator->setAllowThrow( false );
-    manipulator->setHomePosition(osg::Vec3d(0.0,-500.0,3.0),osg::Vec3d(0,0,0),osg::Vec3d(0,0,1));
+    manipulator->setHomePosition(osg::Vec3d(200.0,-500.0,250.0),osg::Vec3d(200,500,-10),osg::Vec3d(0,0,1));
     mView->setCameraManipulator( manipulator );
     mViewer->addView( mView );
     mViewer->setThreadingModel( osgViewer::CompositeViewer::SingleThreaded );
@@ -180,18 +202,18 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     mView->home();
 
     //initialize timer
-    double framesPerSecond{30};
+    double framesPerSecond{30 };
     double timeStep{1.0/framesPerSecond};
 
     //creates sphere
     objectPosition spherePosition;
     spherePosition.update_timeStep(timeStep);
-    std::vector<double> startPosition{0,0,500};
+    std::vector<double> startPosition{0,0,0};
     spherePosition.redefine_position(startPosition);
-    std::vector<double> startVelocity{0,0,-10};
+    std::vector<double> startVelocity{1000,2000,3000};
     spherePosition.update_velocity(startVelocity);
     osg::Vec3 spherePositionVec3 = convertPhysicsVectorToVec3(spherePosition.get_position());
-    osg::Sphere* sphere = new osg::Sphere(spherePositionVec3, 10.0f );
+    osg::Sphere* sphere = new osg::Sphere(spherePositionVec3, 1.0f );
     osg::Geode* geode = new osg::Geode;
     makeMainSphere(sphere, geode);
     osg::PositionAttitudeTransform *transform = new osg::PositionAttitudeTransform;

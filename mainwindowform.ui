@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>812</width>
-    <height>600</height>
+    <width>803</width>
+    <height>578</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>Qt OpenSceneGraph Example</string>
@@ -16,7 +22,138 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="OSGWidget" name="widget" native="true"/>
+     <widget class="OSGWidget" name="widget" native="true">
+      <widget class="QGroupBox" name="groupBox">
+       <property name="geometry">
+        <rect>
+         <x>20</x>
+         <y>20</y>
+         <width>211</width>
+         <height>281</height>
+        </rect>
+       </property>
+       <property name="title">
+        <string>Adjust Trajectory</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignBottom|Qt::AlignJustify</set>
+       </property>
+       <widget class="QPushButton" name="startButton">
+        <property name="geometry">
+         <rect>
+          <x>30</x>
+          <y>240</y>
+          <width>141</width>
+          <height>24</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Fire!</string>
+        </property>
+       </widget>
+       <widget class="QScrollBar" name="horizontalScrollBar">
+        <property name="geometry">
+         <rect>
+          <x>21</x>
+          <y>202</y>
+          <width>151</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+       <widget class="QScrollBar" name="verticalScrollBar">
+        <property name="geometry">
+         <rect>
+          <x>21</x>
+          <y>54</y>
+          <width>20</width>
+          <height>141</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>16</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Z</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+       <widget class="QLabel" name="label_2">
+        <property name="geometry">
+         <rect>
+          <x>180</x>
+          <y>210</y>
+          <width>16</width>
+          <height>16</height>
+         </rect>
+        </property>
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Ignored">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="text">
+         <string>X</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
+       <widget class="QWidget" name="">
+        <property name="geometry">
+         <rect>
+          <x>60</x>
+          <y>50</y>
+          <width>102</width>
+          <height>124</height>
+         </rect>
+        </property>
+        <layout class="QVBoxLayout" name="verticalLayout">
+         <item>
+          <widget class="QLabel" name="label_3">
+           <property name="text">
+            <string>Power</string>
+           </property>
+           <property name="alignment">
+            <set>Qt::AlignCenter</set>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <widget class="QDial" name="dial"/>
+         </item>
+        </layout>
+       </widget>
+      </widget>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -25,7 +162,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>812</width>
+     <width>803</width>
      <height>22</height>
     </rect>
    </property>
