@@ -35,12 +35,9 @@ void position_of_object(createVector &currentPosition, createVector &velocity, d
     }
 }
 
-void collision_velocity(createVector &currentVelocity, double &coefficientOfRestitution)
+void collision_velocity(createVector &currentVelocity, double &coefficientOfRestitution, size_t normalDirection)
 {
     double nVelocity;
-    for(size_t i{0};i<currentVelocity.get_size();i++)
-    {
-        nVelocity = currentVelocity.get_value(i)*coefficientOfRestitution;
-        currentVelocity.set_value(i,nVelocity);
-    }
+    nVelocity = currentVelocity.get_value(normalDirection)*coefficientOfRestitution;
+    currentVelocity.set_value(normalDirection,nVelocity);
 }

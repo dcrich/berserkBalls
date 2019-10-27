@@ -22,7 +22,7 @@ public:
     double get_timeStep();
     void update_timeStep(double newTimeStep);
 
-    void static_collision();
+    void static_collision(size_t normalDirection);
 
 private:
     createVector currentPosition;

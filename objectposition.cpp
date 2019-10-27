@@ -93,8 +93,7 @@ void objectPosition::update_timeStep(double newTimeStep)
     timeStep = newTimeStep;
 }
 
-void objectPosition::static_collision()
+void objectPosition::static_collision(size_t normalDirection)
 {
-    collision_velocity(currentVelocity,coefficientOfRestitution);
-    update_position(); //might cause problems visually if not drawn at the right time
+    collision_velocity(currentVelocity,coefficientOfRestitution, normalDirection);
 }

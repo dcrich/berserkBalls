@@ -200,7 +200,7 @@ TEST(startVelocityCollisionWithStatic, whenCollision_ExpectChangeInVelocity)
     std::vector<double> updateVelocity{10.0,10.0,10.0};
     currentPosition.update_velocity(updateVelocity);
     currentPosition.first_position();
-    currentPosition.static_collision();
-    std::vector<double> checkVelocity{-5,-5,-5.163333333333334};
+    currentPosition.static_collision(2);
+    std::vector<double> checkVelocity{10,10,-5.163333333333334};
     expect_equal_stdvectors(currentPosition.get_velocity(),checkVelocity);
 }
