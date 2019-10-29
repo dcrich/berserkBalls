@@ -37,8 +37,11 @@ void MainWindow::on_startButton_clicked()
    int angleX = mMainWindowUI->xDirectionBar->value();
    int angleZ = mMainWindowUI->zDirectionBar->value();
    int power = mMainWindowUI->powerDial->value();
-   std::vector<double> newVelocity = convert_GUI_input_to_velocity(angleX,power,angleZ);
-    //value to actual value using a function
-    mMainWindowUI->powerDial->value();
+   std::vector<double> newVelocity = convert_GUI_input_to_velocity(angleX,angleZ,power);
     mMainWindowUI->graphics->Fire(newVelocity);
+}
+
+void MainWindow::on_resetButton_clicked()
+{
+    mMainWindowUI->graphics->reset_game();
 }

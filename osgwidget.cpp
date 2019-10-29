@@ -1,4 +1,4 @@
-#include "OSGWidget.h"
+#include "osgwidget.h"
 #include <osg/Camera>
 #include <osg/DisplaySettings>
 #include <osg/Geode>
@@ -34,17 +34,28 @@ osg::Vec3 convert_physics_vector_to_vec3(std::vector<double> mVector)
     return physicsVectorAsVec3;
 }
 
-std::vector<int> check_for_collision(objectPosition *position)
+std::vector<int> check_for_collision(objectPosition *position, float *boundary,float *sphereRadius)
 {
     std::vector<double> coordinates {position->get_position()};
     std::vector<int> checkCollision{0,0,0};
+    double upperVirtualBoundary = static_cast<double>(*boundary-*sphereRadius);
+    double lowerVirtualBoundary = static_cast<double>(*sphereRadius);
 
     for (size_t i{0};i<coordinates.size();i++)
     {
-        if (coordinates[i]<=0 || coordinates[i]>=195)
+        if (coordinates[i]<=lowerVirtualBoundary || coordinates[i]>=upperVirtualBoundary)
         {
             checkCollision[i] = 1;
+            if(coordinates[i]<=lowerVirtualBoundary)
+            {
+                coordinates[i]=lowerVirtualBoundary;
+            }
+            else
+            {
+                coordinates[i] = upperVirtualBoundary;
+            }
         }
+        position->redefine_position(coordinates);
     }
 
     return checkCollision;
@@ -53,35 +64,36 @@ std::vector<int> check_for_collision(objectPosition *position)
 class SphereUpdateCallback: public osg::NodeCallback
 {
 public:
-    SphereUpdateCallback(objectPosition *spherePosition)
+    SphereUpdateCallback(objectPosition *spherePosition, float *cubeLength, float *sphereRadius)
     {
-        position = spherePosition;
+        mPosition = spherePosition;
+        mBoundary = cubeLength;
+        mRadius = sphereRadius;
     }
 
     ~SphereUpdateCallback()
     {
-        delete position;
+        delete mPosition;
     }
 
     virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
     {
-        std::vector<double> coordinates {position->get_position()};
-        std::vector<double> velocity {position->get_velocity()};
-        std::vector<double> coordinatesbottom {0,0,6};
+        std::vector<double> coordinates {mPosition->get_position()};
+        std::vector<double> velocity {mPosition->get_velocity()};
 
-        position->update_position();
-        coordinates  = position->get_position();
-        std::vector<int> collisionCheck = check_for_collision(position);
+        mPosition->update_position();
+        coordinates  = mPosition->get_position();
+        std::vector<int> collisionCheck = check_for_collision(mPosition,mBoundary,mRadius);
 
         for (size_t i{0};i<collisionCheck.size();i++)
         {
             if (collisionCheck[i])
             {
-                position->static_collision(i);
-                position->redefine_position(coordinates);
+                mPosition->static_collision(i);
+                //position->redefine_position(coordinates);//pass in cube size?
             }
         }
-        position->update_position();
+        mPosition->update_position();
 
         osg::Vec3d positionValue {convert_physics_vector_to_vec3(coordinates)};
         osg::PositionAttitudeTransform *pat = dynamic_cast<osg::PositionAttitudeTransform *> (node);
@@ -91,15 +103,16 @@ public:
 
     }
 protected:
-    objectPosition *position;
+    objectPosition *mPosition;
+    float *mBoundary;
+    float *mRadius;
 };
 
 
-void makeMainSphere(osg::Sphere* sphere, osg::Geode* geode )
+void makeMainSphere(osg::Sphere* sphere, osg::Geode* geode, float *sphereRadius)
 {
     osg::Vec3d physicalPositionV3d;
-    float sphereRadius = 8.f;
-    sphere->set(physicalPositionV3d,sphereRadius);
+    sphere->set(physicalPositionV3d,*sphereRadius);
     osg::ShapeDrawable* sd = new osg::ShapeDrawable( sphere );
     sd->setColor( osg::Vec4( 1.f, 1.f, 1.f, 1.f ) );
     sd->setName( "Sphere" );
@@ -111,21 +124,71 @@ void makeMainSphere(osg::Sphere* sphere, osg::Geode* geode )
     stateSet->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
 }
 
-void makeBoundaryBox(osg::Geode* mgeode)
+void makeBoundaryBox(osg::Geode* mgeode, float *cubeLength)
 {
     osg::Vec4 osgVec4color(1.f, 1.f, 1.f, 1.f);
     osg::Vec3 osgVec3dscaleFactor(1.f, 1.f, 1.f);
     osg::Vec3Array* v = new osg::Vec3Array;
-    float cubeLength{200.};
-    v->resize( 4 );
-    (*v)[0].set( 0.f, 0.f, cubeLength);
-    (*v)[1].set(cubeLength, 0.f, cubeLength);
-    (*v)[2].set(cubeLength, cubeLength, cubeLength );
-    (*v)[3].set(0.f, cubeLength, cubeLength);
+    v->resize( 8 );
+    (*v)[0].set( 0.f, 0.f, *cubeLength);
+    (*v)[1].set(*cubeLength, 0.f, *cubeLength);
+    (*v)[2].set(*cubeLength, *cubeLength, *cubeLength );
+    (*v)[3].set(0.f, *cubeLength, *cubeLength);
     (*v)[4].set(0.f, 0.f, 0.f );
-    (*v)[5].set(cubeLength, 0.f, 0.f );
-    (*v)[6].set(cubeLength, cubeLength, 0.f );
-    (*v)[7].set(0.f, cubeLength, 0.f);
+    (*v)[5].set(*cubeLength, 0.f, 0.f );
+    (*v)[6].set(*cubeLength, *cubeLength, 0.f );
+    (*v)[7].set(0.f, *cubeLength, 0.f);
+
+    osg::Geometry* geom = new osg::Geometry;
+    geom->setUseDisplayList( false );
+    geom->setVertexArray( v );
+
+    osg::Vec4Array* c = new osg::Vec4Array;
+    c->push_back( osgVec4color );
+    geom->setColorArray( c, osg::Array::BIND_OVERALL );
+
+    GLushort idxLoops1[4] = {0, 1, 2, 3};
+    GLushort idxLoops2[4] = {4, 5, 6, 7};
+    GLushort idxLoops3[4] = {0, 1, 5, 4};
+    GLushort idxLoops4[4] = {3, 2, 6, 7};
+    GLushort idxLoops5[4] = {1, 2, 6, 5};
+    GLushort idxLoops6[4] = {0, 3, 7, 4};
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops1 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops2 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops3 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops4 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops5 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops6 ) );
+
+
+    mgeode->addDrawable( geom );
+
+    mgeode->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED );
+    mgeode->getOrCreateStateSet()->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
+    osg::PositionAttitudeTransform* transform = new osg::PositionAttitudeTransform;
+    transform->setScale(osgVec3dscaleFactor);
+
+    transform->addChild(mgeode);
+    osg::StateSet* mstateSet = mgeode->getOrCreateStateSet();
+    osg::Material* mmaterial = new osg::Material;
+
+    mmaterial->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE );
+
+    mstateSet->setAttributeAndModes( mmaterial, osg::StateAttribute::ON );
+    mstateSet->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
+}
+
+void make_direction_line(osg::Geode* mgeode, std::vector<float> *lineEndPoint)
+{
+    osg::Vec4 osgVec4color(1.f, 1.f, 1.f, 1.f);
+    osg::Vec3 osgVec3dscaleFactor(1.f, 1.f, 1.f);
+    osg::Vec3Array* v = new osg::Vec3Array;
+    float x{*lineEndPoint[0]};
+            float y
+            float z
+    v->resize( 4 );
+    (*v)[0].set( 0.f, 0.f, 0.f);
+    (*v)[1].set(lineEndPoint[0], lineEndPoint[1], lineEndPoint[2]);
 
     osg::Geometry* geom = new osg::Geometry;
     geom->setUseDisplayList( false );
@@ -200,28 +263,35 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     double framesPerSecond{30};
     double timeStep{1.0/framesPerSecond};
 
+    //create line
+    osg::Geode* lGeode = new osg::Geode;
+
+    //creates box
+    osg::Geode* mgeode = new osg::Geode;
+    float *cubeLength = new float{200};
+    makeBoundaryBox(mgeode,cubeLength);
+    mRoot->addChild(mgeode);
+
     //creates sphere
+     float *sphereRadius = new float{5.0f};
     loadedSphere = new objectPosition;
     loadedSphere->update_timeStep(timeStep);
-    std::vector<double> startPosition{0,0,0};
+    std::vector<double> startPosition{0,0,static_cast<double>(*sphereRadius)};
     loadedSphere->redefine_position(startPosition);
     std::vector<double> startVelocity{0,0,0};
     loadedSphere->update_velocity(startVelocity);
     std::vector<double> startAcceleration{0,0,0};
     loadedSphere->update_acceleration(startAcceleration);
     osg::Vec3 spherePositionVec3 = convert_physics_vector_to_vec3(loadedSphere->get_position());
-    osg::Sphere* sphere = new osg::Sphere(spherePositionVec3, 1.0f );
+    osg::Sphere* sphere = new osg::Sphere(spherePositionVec3,  *sphereRadius);
     osg::Geode* geode = new osg::Geode;
-    makeMainSphere(sphere, geode);
+    makeMainSphere(sphere, geode, sphereRadius);
     osg::PositionAttitudeTransform *transform = new osg::PositionAttitudeTransform;
     transform->setPosition(spherePositionVec3);
-    transform->setUpdateCallback(new SphereUpdateCallback(loadedSphere));
+    transform->setUpdateCallback(new SphereUpdateCallback(loadedSphere, cubeLength, sphereRadius));
     transform->addChild(geode);
     mRoot->addChild(transform);
-    //creates box
-    osg::Geode* mgeode = new osg::Geode;
-    makeBoundaryBox(mgeode);
-    mRoot->addChild(mgeode);
+
 
 
 
@@ -247,8 +317,15 @@ void OSGWidget::Fire(std::vector<double> newVelocity)
     std::vector<double> gravityVector{0,0,-9.8};
     loadedSphere->update_acceleration(gravityVector);
     loadedSphere->update_velocity(newVelocity);
-
-//loaded sphere update physics values
+}
+void OSGWidget::reset_game()
+{
+    std::vector<double> startPosition{0,0,0};
+    loadedSphere->redefine_position(startPosition);
+    std::vector<double> startVelocity{0,0,0};
+    loadedSphere->update_velocity(startVelocity);
+    std::vector<double> startAcceleration{0,0,0};
+    loadedSphere->update_acceleration(startAcceleration);
 }
 
 void OSGWidget::timerEvent(QTimerEvent *)

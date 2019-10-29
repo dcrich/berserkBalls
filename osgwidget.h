@@ -21,6 +21,7 @@ public:
   virtual ~OSGWidget();
 
 void Fire(std::vector<double> newVelocity);
+void reset_game();
 
 
 protected:

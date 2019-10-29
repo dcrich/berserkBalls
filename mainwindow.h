@@ -23,6 +23,8 @@ public slots:
 private slots:
     void on_startButton_clicked();
 
+    void on_resetButton_clicked();
+
 private:
     Ui::MainWindowForm *mMainWindowUI;
 };
