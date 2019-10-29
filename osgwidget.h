@@ -8,6 +8,7 @@
 #include <osgViewer/CompositeViewer>
 #include <osgGA/TrackballManipulator>
 #include <osgText/Text>
+#include "objectposition.h"
 
 class OSGWidget : public QOpenGLWidget
 {
@@ -18,6 +19,10 @@ public:
              Qt::WindowFlags f = 0 );
 
   virtual ~OSGWidget();
+
+void Fire(std::vector<double> newVelocity);
+
+
 protected:
   void timerEvent(QTimerEvent *);
   virtual void paintEvent( QPaintEvent* paintEvent );
@@ -43,6 +48,7 @@ private:
   osg::ref_ptr<osgViewer::View> mView;
   osg::ref_ptr<osg::Group> mRoot;
   int mTimerId{0};
+  objectPosition *loadedSphere{nullptr};
 };
 
 #endif

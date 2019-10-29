@@ -34,9 +34,9 @@ osg::Vec3 convert_physics_vector_to_vec3(std::vector<double> mVector)
     return physicsVectorAsVec3;
 }
 
-std::vector<int> check_for_collision(objectPosition position)
+std::vector<int> check_for_collision(objectPosition *position)
 {
-    std::vector<double> coordinates {position.get_position()};
+    std::vector<double> coordinates {position->get_position()};
     std::vector<int> checkCollision{0,0,0};
 
     for (size_t i{0};i<coordinates.size();i++)
@@ -53,49 +53,35 @@ std::vector<int> check_for_collision(objectPosition position)
 class SphereUpdateCallback: public osg::NodeCallback
 {
 public:
-    SphereUpdateCallback(objectPosition spherePosition)
+    SphereUpdateCallback(objectPosition *spherePosition)
     {
         position = spherePosition;
     }
 
+    ~SphereUpdateCallback()
+    {
+        delete position;
+    }
+
     virtual void operator()(osg::Node* node, osg::NodeVisitor* nv)
     {
-        std::vector<double> coordinates {position.get_position()};
-        std::vector<double> velocity {position.get_velocity()};
+        std::vector<double> coordinates {position->get_position()};
+        std::vector<double> velocity {position->get_velocity()};
         std::vector<double> coordinatesbottom {0,0,6};
 
-        position.update_position();
-        coordinates  = position.get_position();
+        position->update_position();
+        coordinates  = position->get_position();
         std::vector<int> collisionCheck = check_for_collision(position);
 
         for (size_t i{0};i<collisionCheck.size();i++)
         {
             if (collisionCheck[i])
             {
-                position.static_collision(i);
-                position.redefine_position(coordinates);
+                position->static_collision(i);
+                position->redefine_position(coordinates);
             }
         }
-        position.update_position();
-
-//        if (coordinates[0]>500 || coordinates[0]<0)
-//        {
-//            position.redefine_position(coordinates);
-//            position.static_collision(0);
-//            coordinates = position.get_position();
-//        }
-//        else if (coordinates[1]>500 || coordinates[1]<0)
-//        {
-//            position.redefine_position(coordinates);
-//            position.static_collision(1);
-//            coordinates = position.get_position();
-//        }
-//        else if (coordinates[2]>250 || coordinates[2]<0)
-//        {
-//            position.redefine_position(coordinates);
-//            position.static_collision(2);
-//            coordinates = position.get_position();
-//        }
+        position->update_position();
 
         osg::Vec3d positionValue {convert_physics_vector_to_vec3(coordinates)};
         osg::PositionAttitudeTransform *pat = dynamic_cast<osg::PositionAttitudeTransform *> (node);
@@ -105,7 +91,7 @@ public:
 
     }
 protected:
-    objectPosition position;
+    objectPosition *position;
 };
 
 
@@ -211,23 +197,25 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     mView->home();
 
     //initialize timer
-    double framesPerSecond{30 };
+    double framesPerSecond{30};
     double timeStep{1.0/framesPerSecond};
 
     //creates sphere
-    objectPosition spherePosition;
-    spherePosition.update_timeStep(timeStep);
+    loadedSphere = new objectPosition;
+    loadedSphere->update_timeStep(timeStep);
     std::vector<double> startPosition{0,0,0};
-    spherePosition.redefine_position(startPosition);
-    std::vector<double> startVelocity{88,100,95};
-    spherePosition.update_velocity(startVelocity);
-    osg::Vec3 spherePositionVec3 = convert_physics_vector_to_vec3(spherePosition.get_position());
+    loadedSphere->redefine_position(startPosition);
+    std::vector<double> startVelocity{0,0,0};
+    loadedSphere->update_velocity(startVelocity);
+    std::vector<double> startAcceleration{0,0,0};
+    loadedSphere->update_acceleration(startAcceleration);
+    osg::Vec3 spherePositionVec3 = convert_physics_vector_to_vec3(loadedSphere->get_position());
     osg::Sphere* sphere = new osg::Sphere(spherePositionVec3, 1.0f );
     osg::Geode* geode = new osg::Geode;
     makeMainSphere(sphere, geode);
     osg::PositionAttitudeTransform *transform = new osg::PositionAttitudeTransform;
     transform->setPosition(spherePositionVec3);
-    transform->setUpdateCallback(new SphereUpdateCallback(spherePosition));
+    transform->setUpdateCallback(new SphereUpdateCallback(loadedSphere));
     transform->addChild(geode);
     mRoot->addChild(transform);
     //creates box
@@ -252,8 +240,17 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
 OSGWidget::~OSGWidget()
 {
     killTimer(mTimerId);
-    delete mViewer;
 }
+
+void OSGWidget::Fire(std::vector<double> newVelocity)
+{
+    std::vector<double> gravityVector{0,0,-9.8};
+    loadedSphere->update_acceleration(gravityVector);
+    loadedSphere->update_velocity(newVelocity);
+
+//loaded sphere update physics values
+}
+
 void OSGWidget::timerEvent(QTimerEvent *)
 {
     update();

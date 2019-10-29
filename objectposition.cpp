@@ -6,7 +6,7 @@
 
 objectPosition::objectPosition()
 {
-    currentVelocity.redefine_My_Vector({6,0,6});
+    currentVelocity.redefine_My_Vector({8,8,8});
     currentAcceleration.redefine_My_Vector({0.0,0.0,-9.8});
     currentDrag.redefine_My_Vector({0.0,0.0,0.0});
 }
@@ -25,6 +25,7 @@ void objectPosition::first_position()
 }
 void objectPosition::update_position()
 {
+    acceleration_of_object(currentAcceleration,currentDrag,currentMass);
     velocity_of_object(currentVelocity,currentAcceleration,timeStep);
     formerPosition = currentPosition;
     position_of_object(currentPosition,currentVelocity,timeStep);
@@ -97,3 +98,8 @@ void objectPosition::static_collision(size_t normalDirection)
 {
     collision_velocity(currentVelocity,coefficientOfRestitution, normalDirection);
 }
+
+ objectPosition::~objectPosition()
+ {
+
+ }
