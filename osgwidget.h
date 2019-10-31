@@ -50,6 +50,9 @@ private:
   osg::ref_ptr<osg::Group> mRoot;
   int mTimerId{0};
   objectPosition *loadedSphere{nullptr};
+  float cubeLength{200.f};
+  float sphereRadius{5.0f};
+  float goalSize = sphereRadius*5.f;
 };
 
 #endif

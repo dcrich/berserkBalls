@@ -34,12 +34,12 @@ osg::Vec3 convert_physics_vector_to_vec3(std::vector<double> mVector)
     return physicsVectorAsVec3;
 }
 
-std::vector<int> check_for_collision(objectPosition *position, float *boundary,float *sphereRadius)
+std::vector<int> check_for_collision(objectPosition *position, float boundary,float sphereRadius)
 {
     std::vector<double> coordinates {position->get_position()};
     std::vector<int> checkCollision{0,0,0};
-    double upperVirtualBoundary = static_cast<double>(*boundary-*sphereRadius);
-    double lowerVirtualBoundary = static_cast<double>(*sphereRadius);
+    double upperVirtualBoundary = static_cast<double>(boundary-sphereRadius);
+    double lowerVirtualBoundary = static_cast<double>(sphereRadius);
 
     for (size_t i{0};i<coordinates.size();i++)
     {
@@ -61,10 +61,25 @@ std::vector<int> check_for_collision(objectPosition *position, float *boundary,f
     return checkCollision;
 }
 
+bool check_for_goal(objectPosition *position, float boundary, float goalSize)
+{
+    bool didYouWin{0};
+    std::vector<double> coordinates {position->get_position()};
+    double VirtualBoundary = static_cast<double>(boundary-goalSize);
+
+    if (coordinates[0]>=VirtualBoundary && coordinates[1]>=VirtualBoundary && coordinates[2]>=VirtualBoundary)
+    {
+        didYouWin = 1;
+        coordinates = {0,0,0};// change to set velocity and acceleration
+    }
+    position->redefine_position(coordinates);
+    return didYouWin;
+}
+
 class SphereUpdateCallback: public osg::NodeCallback
 {
 public:
-    SphereUpdateCallback(objectPosition *spherePosition, float *cubeLength, float *sphereRadius)
+    SphereUpdateCallback(objectPosition *spherePosition, float cubeLength, float sphereRadius)
     {
         mPosition = spherePosition;
         mBoundary = cubeLength;
@@ -80,6 +95,7 @@ public:
     {
         std::vector<double> coordinates {mPosition->get_position()};
         std::vector<double> velocity {mPosition->get_velocity()};
+//        bool didYouWin{0};
 
         mPosition->update_position();
         coordinates  = mPosition->get_position();
@@ -94,6 +110,11 @@ public:
             }
         }
         mPosition->update_position();
+//        didYouWin = check_for_goal(mPosition,mBoundary,mRadius);
+//        if (didYouWin)
+//        {
+//            OSGWidget::reset_game();
+//        }
 
         osg::Vec3d positionValue {convert_physics_vector_to_vec3(coordinates)};
         osg::PositionAttitudeTransform *pat = dynamic_cast<osg::PositionAttitudeTransform *> (node);
@@ -104,15 +125,15 @@ public:
     }
 protected:
     objectPosition *mPosition;
-    float *mBoundary;
-    float *mRadius;
+    float mBoundary;
+    float mRadius;
 };
 
 
-void makeMainSphere(osg::Sphere* sphere, osg::Geode* geode, float *sphereRadius)
+void makeMainSphere(osg::Sphere* sphere, osg::Geode* geode, float sphereRadius)
 {
     osg::Vec3d physicalPositionV3d;
-    sphere->set(physicalPositionV3d,*sphereRadius);
+    sphere->set(physicalPositionV3d,sphereRadius);
     osg::ShapeDrawable* sd = new osg::ShapeDrawable( sphere );
     sd->setColor( osg::Vec4( 1.f, 1.f, 1.f, 1.f ) );
     sd->setName( "Sphere" );
@@ -124,20 +145,20 @@ void makeMainSphere(osg::Sphere* sphere, osg::Geode* geode, float *sphereRadius)
     stateSet->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
 }
 
-void makeBoundaryBox(osg::Geode* mgeode, float *cubeLength)
+void makeBoundaryBox(osg::Geode* mgeode, float cubeLength)
 {
     osg::Vec4 osgVec4color(1.f, 1.f, 1.f, 1.f);
     osg::Vec3 osgVec3dscaleFactor(1.f, 1.f, 1.f);
     osg::Vec3Array* v = new osg::Vec3Array;
     v->resize( 8 );
-    (*v)[0].set( 0.f, 0.f, *cubeLength);
-    (*v)[1].set(*cubeLength, 0.f, *cubeLength);
-    (*v)[2].set(*cubeLength, *cubeLength, *cubeLength );
-    (*v)[3].set(0.f, *cubeLength, *cubeLength);
+    (*v)[0].set( 0.f, 0.f, cubeLength);
+    (*v)[1].set(cubeLength, 0.f, cubeLength);
+    (*v)[2].set(cubeLength, cubeLength, cubeLength );
+    (*v)[3].set(0.f, cubeLength, cubeLength);
     (*v)[4].set(0.f, 0.f, 0.f );
-    (*v)[5].set(*cubeLength, 0.f, 0.f );
-    (*v)[6].set(*cubeLength, *cubeLength, 0.f );
-    (*v)[7].set(0.f, *cubeLength, 0.f);
+    (*v)[5].set(cubeLength, 0.f, 0.f );
+    (*v)[6].set(cubeLength, cubeLength, 0.f );
+    (*v)[7].set(0.f, cubeLength, 0.f);
 
     osg::Geometry* geom = new osg::Geometry;
     geom->setUseDisplayList( false );
@@ -178,17 +199,24 @@ void makeBoundaryBox(osg::Geode* mgeode, float *cubeLength)
     mstateSet->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
 }
 
-void make_direction_line(osg::Geode* mgeode, std::vector<float> *lineEndPoint)
+void makeGoalBox(osg::Geode* mgeode, float cubeLength, std::vector<float> cornerPosition)
 {
-    osg::Vec4 osgVec4color(1.f, 1.f, 1.f, 1.f);
+    osg::Vec4 osgVec4color(0.f, 1.f, 0.f, 1.f);
     osg::Vec3 osgVec3dscaleFactor(1.f, 1.f, 1.f);
     osg::Vec3Array* v = new osg::Vec3Array;
-    float x{*lineEndPoint[0]};
-            float y
-            float z
-    v->resize( 4 );
-    (*v)[0].set( 0.f, 0.f, 0.f);
-    (*v)[1].set(lineEndPoint[0], lineEndPoint[1], lineEndPoint[2]);
+    float xCoord = cornerPosition[0];
+    float yCoord = cornerPosition[1];
+    float zCoord = cornerPosition[2];
+
+    v->resize( 8 );
+    (*v)[0].set( xCoord, yCoord, zCoord+cubeLength);
+    (*v)[1].set(xCoord+cubeLength, yCoord, zCoord+cubeLength);
+    (*v)[2].set(xCoord+cubeLength, yCoord+cubeLength, zCoord+cubeLength );
+    (*v)[3].set(xCoord, yCoord+cubeLength, zCoord+cubeLength);
+    (*v)[4].set(xCoord, yCoord, zCoord );
+    (*v)[5].set(xCoord+cubeLength, yCoord, zCoord);
+    (*v)[6].set(xCoord+cubeLength, yCoord+cubeLength, zCoord);
+    (*v)[7].set(xCoord, yCoord+cubeLength, zCoord);
 
     osg::Geometry* geom = new osg::Geometry;
     geom->setUseDisplayList( false );
@@ -204,12 +232,12 @@ void make_direction_line(osg::Geode* mgeode, std::vector<float> *lineEndPoint)
     GLushort idxLoops4[4] = {3, 2, 6, 7};
     GLushort idxLoops5[4] = {1, 2, 6, 5};
     GLushort idxLoops6[4] = {0, 3, 7, 4};
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops1 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops1 ) );
     geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops2 ) );
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops3 ) );
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops4 ) );
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops5 ) );
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops6 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops3 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops4 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops5 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops6 ) );
 
 
     mgeode->addDrawable( geom );
@@ -228,6 +256,57 @@ void make_direction_line(osg::Geode* mgeode, std::vector<float> *lineEndPoint)
     mstateSet->setAttributeAndModes( mmaterial, osg::StateAttribute::ON );
     mstateSet->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
 }
+
+//void make_direction_line(osg::Geode* mgeode, std::vector<float> *lineEndPoint)
+//{
+//    osg::Vec4 osgVec4color(1.f, 1.f, 1.f, 1.f);
+//    osg::Vec3 osgVec3dscaleFactor(1.f, 1.f, 1.f);
+//    osg::Vec3Array* v = new osg::Vec3Array;
+//    float x{*lineEndPoint[0]};
+//            float y;
+//            float z;
+//    v->resize( 4 );
+//    (*v)[0].set( 0.f, 0.f, 0.f);
+//    (*v)[1].set(lineEndPoint[0], lineEndPoint[1], lineEndPoint[2]);
+
+//    osg::Geometry* geom = new osg::Geometry;
+//    geom->setUseDisplayList( false );
+//    geom->setVertexArray( v );
+
+//    osg::Vec4Array* c = new osg::Vec4Array;
+//    c->push_back( osgVec4color );
+//    geom->setColorArray( c, osg::Array::BIND_OVERALL );
+
+//    GLushort idxLoops1[4] = {0, 1, 2, 3};
+//    GLushort idxLoops2[4] = {4, 5, 6, 7};
+//    GLushort idxLoops3[4] = {0, 1, 5, 4};
+//    GLushort idxLoops4[4] = {3, 2, 6, 7};
+//    GLushort idxLoops5[4] = {1, 2, 6, 5};
+//    GLushort idxLoops6[4] = {0, 3, 7, 4};
+//    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops1 ) );
+//    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops2 ) );
+//    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops3 ) );
+//    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops4 ) );
+//    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops5 ) );
+//    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops6 ) );
+
+
+//    mgeode->addDrawable( geom );
+
+//    mgeode->getOrCreateStateSet()->setMode( GL_LIGHTING, osg::StateAttribute::OFF | osg::StateAttribute::PROTECTED );
+//    mgeode->getOrCreateStateSet()->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
+//    osg::PositionAttitudeTransform* transform = new osg::PositionAttitudeTransform;
+//    transform->setScale(osgVec3dscaleFactor);
+
+//    transform->addChild(mgeode);
+//    osg::StateSet* mstateSet = mgeode->getOrCreateStateSet();
+//    osg::Material* mmaterial = new osg::Material;
+
+//    mmaterial->setColorMode( osg::Material::AMBIENT_AND_DIFFUSE );
+
+//    mstateSet->setAttributeAndModes( mmaterial, osg::StateAttribute::ON );
+//    mstateSet->setMode( GL_DEPTH_TEST, osg::StateAttribute::ON );
+//}
 
 OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     QOpenGLWidget{ parent,flags },
@@ -238,21 +317,21 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
   , mViewer{ new osgViewer::CompositeViewer }
 {
     mRoot = new osg::Group;
-    // create camera and view how to get the ball to be the center of the camera?
+    // create camera and view
     osgViewer::View* mView = new osgViewer::View;
-    float aspectRatio = static_cast<float>( this->width() ) / static_cast<float>( this->height() );
+    double aspectRatio = static_cast<double>( this->width() ) / static_cast<double>( this->height() );
     auto pixelRatio   = this->devicePixelRatio();
     osg::Camera* camera = new osg::Camera;
     camera->setViewport( 0, 0, this->width() * pixelRatio, this->height() * pixelRatio );
     camera->setClearColor( osg::Vec4( 0.25f, 0.1f, 0.4f, 1.f ) );
-    camera->setProjectionMatrixAsPerspective( 45.f, aspectRatio, 1.f, 1000.f );
+    camera->setProjectionMatrixAsPerspective( 45.0, aspectRatio, 1.0, 1000.0);
     camera->setGraphicsContext( mGraphicsWindow );
     mView->setCamera( camera );
     mView->setSceneData( mRoot.get() );
     mView->addEventHandler( new osgViewer::StatsHandler );
     osg::ref_ptr<osgGA::TrackballManipulator> manipulator = new osgGA::TrackballManipulator;
     manipulator->setAllowThrow( false );
-    manipulator->setHomePosition(osg::Vec3d(200.0,-500.0,250.0),osg::Vec3d(200,500,-10),osg::Vec3d(0,0,1));
+    manipulator->setHomePosition(osg::Vec3d(-25.0,-250.0,50.0),osg::Vec3d(100,0,100),osg::Vec3d(0,0,1));
     mView->setCameraManipulator( manipulator );
     mViewer->addView( mView );
     mViewer->setThreadingModel( osgViewer::CompositeViewer::SingleThreaded );
@@ -268,22 +347,20 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
 
     //creates box
     osg::Geode* mgeode = new osg::Geode;
-    float *cubeLength = new float{200};
     makeBoundaryBox(mgeode,cubeLength);
     mRoot->addChild(mgeode);
 
     //creates sphere
-     float *sphereRadius = new float{5.0f};
     loadedSphere = new objectPosition;
     loadedSphere->update_timeStep(timeStep);
-    std::vector<double> startPosition{0,0,static_cast<double>(*sphereRadius)};
+    std::vector<double> startPosition{0,0,static_cast<double>(sphereRadius)};
     loadedSphere->redefine_position(startPosition);
     std::vector<double> startVelocity{0,0,0};
     loadedSphere->update_velocity(startVelocity);
     std::vector<double> startAcceleration{0,0,0};
     loadedSphere->update_acceleration(startAcceleration);
     osg::Vec3 spherePositionVec3 = convert_physics_vector_to_vec3(loadedSphere->get_position());
-    osg::Sphere* sphere = new osg::Sphere(spherePositionVec3,  *sphereRadius);
+    osg::Sphere* sphere = new osg::Sphere(spherePositionVec3,sphereRadius);
     osg::Geode* geode = new osg::Geode;
     makeMainSphere(sphere, geode, sphereRadius);
     osg::PositionAttitudeTransform *transform = new osg::PositionAttitudeTransform;
@@ -291,6 +368,12 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     transform->setUpdateCallback(new SphereUpdateCallback(loadedSphere, cubeLength, sphereRadius));
     transform->addChild(geode);
     mRoot->addChild(transform);
+
+    //create goal box
+    osg::Geode* gGeode = new osg::Geode;
+    std::vector<float> goalPosition{cubeLength-goalSize,cubeLength-goalSize,cubeLength-goalSize};
+    makeGoalBox(gGeode,goalSize,goalPosition);
+    mRoot->addChild(gGeode);
 
 
 
@@ -331,6 +414,9 @@ void OSGWidget::reset_game()
 void OSGWidget::timerEvent(QTimerEvent *)
 {
     update();
+    bool didYouWin = check_for_goal(loadedSphere,cubeLength,goalSize);
+    if (didYouWin)
+        reset_game();
 }
 
 void OSGWidget::paintEvent( QPaintEvent* /* paintEvent */ )
