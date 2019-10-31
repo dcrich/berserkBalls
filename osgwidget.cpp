@@ -70,10 +70,36 @@ bool check_for_goal(objectPosition *position, float boundary, float goalSize)
     if (coordinates[0]>=VirtualBoundary && coordinates[1]>=VirtualBoundary && coordinates[2]>=VirtualBoundary)
     {
         didYouWin = 1;
-        coordinates = {0,0,0};// change to set velocity and acceleration
+        std::vector<double> zeroVelocity{0,0,0};
+        position->update_velocity(zeroVelocity);
+        std::vector<double> zeroDrag{0,0,0};
+        position->update_drag(zeroDrag);
+        std::vector<double> zeroAcceleration{0,0,0};
+        position->update_acceleration(zeroAcceleration);
     }
-    position->redefine_position(coordinates);
+
     return didYouWin;
+}
+bool check_for_lose(objectPosition *position, bool didYouLose)
+{
+    std::vector<double> currentVelocity {position->get_velocity()};
+    double basicallyZero = .000001;
+
+    if (currentVelocity[0]<=basicallyZero && currentVelocity[1]<=basicallyZero && currentVelocity[2]<=basicallyZero)
+    {
+        didYouLose = true;
+//        std::vector<double> zeroVelocity{0,0,0};
+//        position->update_velocity(zeroVelocity);
+//        std::vector<double> zeroDrag{0,0,0};
+//        position->update_drag(zeroDrag);
+//        std::vector<double> zeroAcceleration{0,0,0};
+//        position->update_acceleration(zeroAcceleration);
+    }
+    else
+    {
+        didYouLose = false;
+    }
+    return didYouLose;
 }
 
 class SphereUpdateCallback: public osg::NodeCallback
@@ -95,7 +121,7 @@ public:
     {
         std::vector<double> coordinates {mPosition->get_position()};
         std::vector<double> velocity {mPosition->get_velocity()};
-//        bool didYouWin{0};
+        //        bool didYouWin{0};
 
         mPosition->update_position();
         coordinates  = mPosition->get_position();
@@ -110,11 +136,11 @@ public:
             }
         }
         mPosition->update_position();
-//        didYouWin = check_for_goal(mPosition,mBoundary,mRadius);
-//        if (didYouWin)
-//        {
-//            OSGWidget::reset_game();
-//        }
+        //        didYouWin = check_for_goal(mPosition,mBoundary,mRadius);
+        //        if (didYouWin)
+        //        {
+        //            OSGWidget::reset_game();
+        //        }
 
         osg::Vec3d positionValue {convert_physics_vector_to_vec3(coordinates)};
         osg::PositionAttitudeTransform *pat = dynamic_cast<osg::PositionAttitudeTransform *> (node);
@@ -232,12 +258,12 @@ void makeGoalBox(osg::Geode* mgeode, float cubeLength, std::vector<float> corner
     GLushort idxLoops4[4] = {3, 2, 6, 7};
     GLushort idxLoops5[4] = {1, 2, 6, 5};
     GLushort idxLoops6[4] = {0, 3, 7, 4};
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops1 ) );
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops2 ) );
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops3 ) );
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops4 ) );
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops5 ) );
-    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::POLYGON, 4, idxLoops6 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops1 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops2 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops3 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops4 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops5 ) );
+    geom->addPrimitiveSet( new osg::DrawElementsUShort( osg::PrimitiveSet::LINE_LOOP, 4, idxLoops6 ) );
 
 
     mgeode->addDrawable( geom );
@@ -311,9 +337,9 @@ void makeGoalBox(osg::Geode* mgeode, float cubeLength, std::vector<float> corner
 OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     QOpenGLWidget{ parent,flags },
     mGraphicsWindow{ new osgViewer::GraphicsWindowEmbedded{ this->x(),
-                                                            this->y(),
-                                                            this->width(),
-                                                            this->height() } }
+                     this->y(),
+                     this->width(),
+                     this->height() } }
   , mViewer{ new osgViewer::CompositeViewer }
 {
     mRoot = new osg::Group;
@@ -321,9 +347,9 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     osgViewer::View* mView = new osgViewer::View;
     double aspectRatio = static_cast<double>( this->width() ) / static_cast<double>( this->height() );
     auto pixelRatio   = this->devicePixelRatio();
-    osg::Camera* camera = new osg::Camera;
+    camera = new osg::Camera;
     camera->setViewport( 0, 0, this->width() * pixelRatio, this->height() * pixelRatio );
-    camera->setClearColor( osg::Vec4( 0.25f, 0.1f, 0.4f, 1.f ) );
+    camera->setClearColor( backgroundColor );
     camera->setProjectionMatrixAsPerspective( 45.0, aspectRatio, 1.0, 1000.0);
     camera->setGraphicsContext( mGraphicsWindow );
     mView->setCamera( camera );
@@ -400,6 +426,10 @@ void OSGWidget::Fire(std::vector<double> newVelocity)
     std::vector<double> gravityVector{0,0,-9.8};
     loadedSphere->update_acceleration(gravityVector);
     loadedSphere->update_velocity(newVelocity);
+    didYouLose = false;
+    backgroundColor = {0.25f, 0.1f, 0.4f, 1.f };
+    camera->setClearColor( backgroundColor );
+    hasGameStarted = true;
 }
 void OSGWidget::reset_game()
 {
@@ -409,14 +439,33 @@ void OSGWidget::reset_game()
     loadedSphere->update_velocity(startVelocity);
     std::vector<double> startAcceleration{0,0,0};
     loadedSphere->update_acceleration(startAcceleration);
+    backgroundColor = {0.25f, 0.1f, 0.4f, 1.f };
+    camera->setClearColor( backgroundColor );
+    hasGameStarted = false;
 }
 
 void OSGWidget::timerEvent(QTimerEvent *)
 {
     update();
     bool didYouWin = check_for_goal(loadedSphere,cubeLength,goalSize);
+    didYouLose = check_for_lose(loadedSphere,didYouLose);
     if (didYouWin)
-        reset_game();
+    {
+        backgroundColor = {0.f, 0.5f, 0.f, 1.f };
+        camera->setClearColor( backgroundColor );
+        didYouLose = false;
+    }
+    if (didYouLose == true && hasGameStarted == true)
+    {
+        backgroundColor = {0.5f, 0.0f, 0.f, 1.f };
+        camera->setClearColor( backgroundColor );
+    }
+//    else if (didYouLose == false && hasGameStarted == true)
+//    {
+//        backgroundColor = {0.25f, 0.1f, 0.4f, 1.f };
+//        camera->setClearColor( backgroundColor );
+//    }
+
 }
 
 void OSGWidget::paintEvent( QPaintEvent* /* paintEvent */ )
