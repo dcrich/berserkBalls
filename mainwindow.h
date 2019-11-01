@@ -25,6 +25,8 @@ private slots:
 
     void on_resetButton_clicked();
 
+    void on_instructionsButton_clicked();
+
 private:
     Ui::MainWindowForm *mMainWindowUI;
 };

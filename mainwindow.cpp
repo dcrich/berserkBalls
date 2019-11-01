@@ -1,6 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindowform.h"
-
+#include <qmessagebox.h>
 #include <QDockWidget>
 
 std::vector<double> convert_GUI_input_to_velocity(int angleX,int angleZ,int power)
@@ -44,4 +44,15 @@ void MainWindow::on_startButton_clicked()
 void MainWindow::on_resetButton_clicked()
 {
     mMainWindowUI->graphics->reset_game();
+}
+
+void MainWindow::on_instructionsButton_clicked()
+{
+    QMessageBox instructionMessage;
+    instructionMessage.setText("Score the ball in the cube. Use the sliders to aim and the dial to adjust power. If the screen turns red, press 'Reset' to try again.");
+    instructionMessage.setWindowTitle("Instructions");
+    instructionMessage.setStandardButtons(QMessageBox::Ok);
+    instructionMessage.setDefaultButton(QMessageBox::Ok);
+    instructionMessage.setModal(true);
+    instructionMessage.exec();
 }

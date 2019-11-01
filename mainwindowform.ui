@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>803</width>
-    <height>578</height>
+    <height>613</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -23,7 +23,29 @@
    <layout class="QGridLayout" name="gridLayout_2">
     <item row="0" column="0">
      <widget class="OSGWidget" name="graphics" native="true">
-      <layout class="QGridLayout" name="gridLayout" rowstretch="1,0,0" columnstretch="0,0,1">
+      <layout class="QGridLayout" name="gridLayout" rowstretch="1,0,0" columnstretch="0,0,1" columnminimumwidth="0,0,1">
+       <item row="2" column="1">
+        <widget class="QScrollBar" name="xDirectionBar">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimum">
+          <number>1</number>
+         </property>
+         <property name="maximum">
+          <number>89</number>
+         </property>
+         <property name="value">
+          <number>1</number>
+         </property>
+         <property name="orientation">
+          <enum>Qt::Horizontal</enum>
+         </property>
+        </widget>
+       </item>
        <item row="1" column="2">
         <spacer name="horizontalSpacer">
          <property name="orientation">
@@ -55,10 +77,10 @@
           <number>1</number>
          </property>
          <property name="value">
-          <number>44</number>
+          <number>89</number>
          </property>
          <property name="sliderPosition">
-          <number>44</number>
+          <number>89</number>
          </property>
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -85,7 +107,14 @@
         </spacer>
        </item>
        <item row="1" column="1">
-        <layout class="QVBoxLayout" name="verticalLayout">
+        <layout class="QVBoxLayout" name="verticalLayout" stretch="0,0,1,0,0">
+         <item>
+          <widget class="QPushButton" name="instructionsButton">
+           <property name="text">
+            <string>Instructions</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QLabel" name="powerLabel">
            <property name="text">
@@ -102,7 +131,7 @@
             <number>1000</number>
            </property>
            <property name="value">
-            <number>100</number>
+            <number>20</number>
            </property>
            <property name="wrapping">
             <bool>false</bool>
@@ -127,28 +156,6 @@
           </widget>
          </item>
         </layout>
-       </item>
-       <item row="2" column="1">
-        <widget class="QScrollBar" name="xDirectionBar">
-         <property name="sizePolicy">
-          <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
-           <horstretch>0</horstretch>
-           <verstretch>0</verstretch>
-          </sizepolicy>
-         </property>
-         <property name="minimum">
-          <number>1</number>
-         </property>
-         <property name="maximum">
-          <number>89</number>
-         </property>
-         <property name="value">
-          <number>44</number>
-         </property>
-         <property name="orientation">
-          <enum>Qt::Horizontal</enum>
-         </property>
-        </widget>
        </item>
       </layout>
      </widget>

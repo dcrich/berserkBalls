@@ -80,20 +80,15 @@ bool check_for_goal(objectPosition *position, float boundary, float goalSize)
 
     return didYouWin;
 }
-bool check_for_lose(objectPosition *position, bool didYouLose)
+bool check_for_lose(objectPosition *position, bool didYouLose, float sphereRadius)
 {
     std::vector<double> currentVelocity {position->get_velocity()};
-    double basicallyZero = .000001;
+    std::vector<double> coordinates {position->get_position()};
+    double basicallyZero = .5;
 
-    if (currentVelocity[0]<=basicallyZero && currentVelocity[1]<=basicallyZero && currentVelocity[2]<=basicallyZero)
+    if (abs(currentVelocity[2])<=basicallyZero && coordinates[2]<=static_cast<double>(sphereRadius))
     {
         didYouLose = true;
-//        std::vector<double> zeroVelocity{0,0,0};
-//        position->update_velocity(zeroVelocity);
-//        std::vector<double> zeroDrag{0,0,0};
-//        position->update_drag(zeroDrag);
-//        std::vector<double> zeroAcceleration{0,0,0};
-//        position->update_acceleration(zeroAcceleration);
     }
     else
     {
@@ -121,8 +116,6 @@ public:
     {
         std::vector<double> coordinates {mPosition->get_position()};
         std::vector<double> velocity {mPosition->get_velocity()};
-        //        bool didYouWin{0};
-
         mPosition->update_position();
         coordinates  = mPosition->get_position();
         std::vector<int> collisionCheck = check_for_collision(mPosition,mBoundary,mRadius);
@@ -132,22 +125,15 @@ public:
             if (collisionCheck[i])
             {
                 mPosition->static_collision(i);
-                //position->redefine_position(coordinates);//pass in cube size?
             }
         }
         mPosition->update_position();
-        //        didYouWin = check_for_goal(mPosition,mBoundary,mRadius);
-        //        if (didYouWin)
-        //        {
-        //            OSGWidget::reset_game();
-        //        }
 
         osg::Vec3d positionValue {convert_physics_vector_to_vec3(coordinates)};
         osg::PositionAttitudeTransform *pat = dynamic_cast<osg::PositionAttitudeTransform *> (node);
         pat->setPosition(positionValue);
 
         traverse(node, nv);
-
     }
 protected:
     objectPosition *mPosition;
@@ -357,7 +343,7 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     mView->addEventHandler( new osgViewer::StatsHandler );
     osg::ref_ptr<osgGA::TrackballManipulator> manipulator = new osgGA::TrackballManipulator;
     manipulator->setAllowThrow( false );
-    manipulator->setHomePosition(osg::Vec3d(-25.0,-250.0,50.0),osg::Vec3d(100,0,100),osg::Vec3d(0,0,1));
+    manipulator->setHomePosition(osg::Vec3d(-25.0,-250.0,50.0),osg::Vec3d(70,0,100),osg::Vec3d(0,0,1));
     mView->setCameraManipulator( manipulator );
     mViewer->addView( mView );
     mViewer->setThreadingModel( osgViewer::CompositeViewer::SingleThreaded );
@@ -448,7 +434,7 @@ void OSGWidget::timerEvent(QTimerEvent *)
 {
     update();
     bool didYouWin = check_for_goal(loadedSphere,cubeLength,goalSize);
-    didYouLose = check_for_lose(loadedSphere,didYouLose);
+    didYouLose = check_for_lose(loadedSphere,didYouLose, sphereRadius);
     if (didYouWin)
     {
         backgroundColor = {0.f, 0.5f, 0.f, 1.f };
@@ -459,13 +445,8 @@ void OSGWidget::timerEvent(QTimerEvent *)
     {
         backgroundColor = {0.5f, 0.0f, 0.f, 1.f };
         camera->setClearColor( backgroundColor );
-    }
-//    else if (didYouLose == false && hasGameStarted == true)
-//    {
-//        backgroundColor = {0.25f, 0.1f, 0.4f, 1.f };
-//        camera->setClearColor( backgroundColor );
-//    }
 
+    }
 }
 
 void OSGWidget::paintEvent( QPaintEvent* /* paintEvent */ )
