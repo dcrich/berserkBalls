@@ -53,7 +53,7 @@ private:
   float cubeLength{200.f};
   float sphereRadius{5.0f};
   float goalSize = sphereRadius*5.f;
-  osg::Vec4 backgroundColor = {0.25f, 0.1f, 0.4f, 1.f };
+  osg::Vec4 backgroundColor = {0.1f, 0.1f, 0.1f, 1.f };
   osg::Camera* camera{nullptr};
   bool didYouLose{false};
   bool hasGameStarted{false};

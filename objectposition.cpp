@@ -6,8 +6,8 @@
 
 objectPosition::objectPosition()
 {
-    currentVelocity.redefine_My_Vector({8,8,8});
-    currentAcceleration.redefine_My_Vector({0.0,0.0,-9.8});
+    currentVelocity.redefine_My_Vector({0,0,0});
+    currentAcceleration.redefine_My_Vector({0.0,0.0,0.0});
     currentDrag.redefine_My_Vector({0.0,0.0,0.0});
 }
 

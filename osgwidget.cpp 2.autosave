@@ -26,7 +26,45 @@
 #include "sphereupdatecallback.h"
 #include "stdtoosgadapt.h"
 #include "geometrycreator.h"
-#include "worldcollisions.h"
+
+
+bool check_for_goal(objectPosition *position, float boundary, float goalSize)
+{
+    bool didYouWin{0};
+    std::vector<double> coordinates {position->get_position()};
+    double VirtualBoundary = static_cast<double>(boundary-goalSize);
+
+    if (coordinates[0]>=VirtualBoundary && coordinates[1]>=VirtualBoundary && coordinates[2]>=VirtualBoundary)
+    {
+        didYouWin = 1;
+        std::vector<double> zeroVelocity{0,0,0};
+        position->update_velocity(zeroVelocity);
+        std::vector<double> zeroDrag{0,0,0};
+        position->update_drag(zeroDrag);
+        std::vector<double> zeroAcceleration{0,0,0};
+        position->update_acceleration(zeroAcceleration);
+    }
+
+    return didYouWin;
+}
+bool check_for_lose(objectPosition *position, bool didYouLose, float sphereRadius)
+{
+    std::vector<double> currentVelocity {position->get_velocity()};
+    std::vector<double> coordinates {position->get_position()};
+    double basicallyZero = .5;
+
+    if (abs(currentVelocity[2])<=basicallyZero && coordinates[2]<=static_cast<double>(sphereRadius))
+    {
+        didYouLose = true;
+    }
+    else
+    {
+        didYouLose = false;
+    }
+    return didYouLose;
+}
+
+
 
 
 OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
@@ -59,15 +97,16 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     mViewer->realize();
     mView->home();
 
+    //initialize timer
     double framesPerSecond{30};
     double timeStep{1.0/framesPerSecond};
-
     geometryCreator geometryWorld;
-
+    //creates box
     osg::Geode* mgeode = new osg::Geode;
     geometryWorld.makeBoundaryBox(mgeode,cubeLength);
     mRoot->addChild(mgeode);
 
+    //creates sphere
     loadedSphere = new objectPosition;
     loadedSphere->update_timeStep(timeStep);
     std::vector<double> startPosition{0,0,static_cast<double>(sphereRadius)};
@@ -79,18 +118,23 @@ OSGWidget::OSGWidget( QWidget* parent, Qt::WindowFlags flags ):
     osg::Vec3 spherePositionVec3 = convert_physics_vector_to_vec3(loadedSphere->get_position());
     osg::Sphere* sphere = new osg::Sphere(spherePositionVec3,sphereRadius);
     osg::Geode* geode = new osg::Geode;
-    geometryWorld.makeMainSphere(sphere, geode, sphereRadius);
+    makeMainSphere(sphere, geode, sphereRadius);
     osg::PositionAttitudeTransform *transform = new osg::PositionAttitudeTransform;
     transform->setPosition(spherePositionVec3);
     transform->setUpdateCallback(new sphereUpdateCallback(loadedSphere, cubeLength, sphereRadius));
     transform->addChild(geode);
     mRoot->addChild(transform);
 
+    //create goal box
     osg::Geode* gGeode = new osg::Geode;
     std::vector<float> goalPosition{cubeLength-goalSize,cubeLength-goalSize,cubeLength-goalSize};
-    geometryWorld.makeGoalBox(gGeode,goalSize,goalPosition);
+    makeGoalBox(gGeode,goalSize,goalPosition);
     mRoot->addChild(gGeode);
 
+
+
+
+    //idk what this does
     this->setFocusPolicy( Qt::StrongFocus );
     this->setMinimumSize(100, 100 );
     this->setMouseTracking( true );
@@ -113,7 +157,7 @@ void OSGWidget::Fire(std::vector<double> newVelocity)
     loadedSphere->update_acceleration(gravityVector);
     loadedSphere->update_velocity(newVelocity);
     didYouLose = false;
-    backgroundColor = {0.1f, 0.1f, 0.1f, 1.f };
+    backgroundColor = {0.25f, 0.1f, 0.4f, 1.f };
     camera->setClearColor( backgroundColor );
     hasGameStarted = true;
 }
@@ -125,7 +169,7 @@ void OSGWidget::reset_game()
     loadedSphere->update_velocity(startVelocity);
     std::vector<double> startAcceleration{0,0,0};
     loadedSphere->update_acceleration(startAcceleration);
-    backgroundColor = {0.1f, 0.1f, 0.1f, 1.f };
+    backgroundColor = {0.25f, 0.1f, 0.4f, 1.f };
     camera->setClearColor( backgroundColor );
     hasGameStarted = false;
 }
@@ -137,13 +181,13 @@ void OSGWidget::timerEvent(QTimerEvent *)
     didYouLose = check_for_lose(loadedSphere,didYouLose, sphereRadius);
     if (didYouWin)
     {
-        backgroundColor = {0.f, 0.3f, 0.f, 1.f };
+        backgroundColor = {0.f, 0.5f, 0.f, 1.f };
         camera->setClearColor( backgroundColor );
         didYouLose = false;
     }
     if (didYouLose == true && hasGameStarted == true)
     {
-        backgroundColor = {0.4f, 0.0f, 0.f, 1.f };
+        backgroundColor = {0.5f, 0.0f, 0.f, 1.f };
         camera->setClearColor( backgroundColor );
 
     }

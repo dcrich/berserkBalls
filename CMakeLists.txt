@@ -20,8 +20,6 @@ SET(MYSOURCE
     mainwindowform.ui
     osgwidget.h
     osgwidget.cpp
-    thespherecreator.cpp
-    thespherecreator.h
     )
 
 IF (NOT TARGET gtest)
@@ -38,15 +36,27 @@ add_library(physicsVector STATIC
     itsphysics.cpp
     itsphysics.h
     )
-add_library(objectPosition STATIC
+add_library(theWorld STATIC
     objectposition.cpp
     objectposition.h
+    geometrycreator.cpp
+    geometrycreator.h
+    worldcollisions.cpp
+    worldcollisions.h
+    )
+add_library(sphereUpdateCall STATIC
+    sphereupdatecallback.cpp
+    sphereupdatecallback.h
+    )
+add_library(stdOsgInterface STATIC
+    stdtoosgadapt.cpp
+    stdtoosgadapt.h
     )
 
 add_executable(myTests
     physicsUnitTests.cpp
 )
-target_link_libraries(myTests physicsVector objectPosition gtest gtest_main)
+target_link_libraries(myTests physicsVector theWorld  sphereUpdateCall stdOsgInterface gtest gtest_main)
 
 add_executable(${PROJECT_NAME}
     ${MYSOURCE}
@@ -55,6 +65,8 @@ target_link_libraries(${PROJECT_NAME}
     ${OPENSCENEGRAPH_LIBRARIES}	
     Qt5::Widgets
     Qt5::Gui
-    objectPosition
+    theWorld
     physicsVector
+    sphereUpdateCall
+    stdOsgInterface
 )
