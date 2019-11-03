@@ -6,6 +6,7 @@
 #include "createvector.h"
 #include "itsphysics.h"
 #include "objectposition.h"
+#include "worldcollisions.h"
 
 void expect_equal_stdvectors(std::vector<double> mVector, std::vector<double> mCheckVector)
 {
@@ -13,7 +14,6 @@ void expect_equal_stdvectors(std::vector<double> mVector, std::vector<double> mC
     EXPECT_DOUBLE_EQ(mVector[1],mCheckVector[1]);
     EXPECT_DOUBLE_EQ(mVector[2],mCheckVector[2]);
 }
-
 
 
 TEST(createAnObject, whenObjectCreated_StartAtOrigin)
@@ -25,7 +25,7 @@ TEST(createAnObject, whenObjectCreated_StartAtOrigin)
 TEST(createObjectVelcity, whenObjectCreated_ExpectVelocity)
 {
     objectPosition currentPosition;
-    std::vector<double> checkVelocity{6,0,6};
+    std::vector<double> checkVelocity{0,0,0};
     expect_equal_stdvectors(currentPosition.get_velocity(), checkVelocity);
 }
 TEST(updateObjectVelocity, whenVelocityChanges_ExpectNewVelocity)
@@ -38,7 +38,7 @@ TEST(updateObjectVelocity, whenVelocityChanges_ExpectNewVelocity)
 TEST(createObjectAcceleration, whenObjectCreated_ExpectAcceleration)
 {
     objectPosition currentPosition;
-    std::vector<double> checkAcceleration{0,0,-9.8};
+    std::vector<double> checkAcceleration{0,0,0};
     expect_equal_stdvectors(currentPosition.get_acceleration(),checkAcceleration);
 }
 TEST(updateObjectAcceleration, whenAccelerationChanges_ExpectNewAcceleration)
@@ -132,6 +132,8 @@ TEST(firstObjectPositionNoDrag, whenObjectMoves_ExpectNewPosition)
     objectPosition currentPosition;
     std::vector<double> updateVelocity{10.0,10.0,10.0};
     currentPosition.update_velocity(updateVelocity);
+    std::vector<double> updateAccel{0.0,0.0,-9.8};
+    currentPosition.update_acceleration(updateAccel);
     double timeStep{0.5};
     currentPosition.update_timeStep(timeStep);
     currentPosition.first_position();
@@ -143,6 +145,8 @@ TEST(firstObjectPositionPositiveDragNegativeAccel, whenObjectMoves_ExpectNewPosi
     objectPosition currentPosition;
     std::vector<double> updateVelocity{10.0,10.0,10.0};
     currentPosition.update_velocity(updateVelocity);
+    std::vector<double> updateAccel{0.0,0.0,-9.8};
+    currentPosition.update_acceleration(updateAccel);
     std::vector<double> updateDrag{1.0,2.0,3.0};
     currentPosition.update_drag(updateDrag);
     double timeStep{0.5};
@@ -156,11 +160,13 @@ TEST(firstObjectPositionNegativeDragNegativeAccel, whenObjectMoves_ExpectNewPosi
     objectPosition currentPosition;
     std::vector<double> updateVelocity{10.0,10.0,10.0};
     currentPosition.update_velocity(updateVelocity);
+    std::vector<double> updateAccel{0.0,0.0,-9.8};
+    currentPosition.update_acceleration(updateAccel);
     std::vector<double> updateDrag{-1.0,-2.0,-3.0};
     currentPosition.update_drag(updateDrag);
     double timeStep{0.5};
     currentPosition.update_timeStep(timeStep);
-    currentPosition.first_position();
+    currentPosition.update_position();
     std::vector<double> checkNewPosition{4.95,4.9,2.4};
     expect_equal_stdvectors(currentPosition.get_position(),checkNewPosition);
 }
@@ -201,6 +207,66 @@ TEST(startVelocityCollisionWithStatic, whenCollision_ExpectChangeInVelocity)
     currentPosition.update_velocity(updateVelocity);
     currentPosition.first_position();
     currentPosition.static_collision(2);
-    std::vector<double> checkVelocity{10,10,-5.163333333333334};
+    std::vector<double> checkVelocity{10,10,-5};
     expect_equal_stdvectors(currentPosition.get_velocity(),checkVelocity);
 }
+TEST(collisionWithXYzeroPlane, whenBallMeetsGround_ExpectCollision)
+{
+    objectPosition currentPosition;
+
+}
+
+TEST(collisionWithXZzeroPlane, whenBallMeetsWall_ExpectCollision)
+{
+    objectPosition currentPosition;
+
+}
+TEST(collisionWithYZzeroPlane, whenBallMeetsWall_ExpectCollision)
+{
+    objectPosition currentPosition;
+
+}
+TEST(collisionWithXYzPlane, whenBallMeetsGround_ExpectCollision)
+{
+    objectPosition currentPosition;
+
+}
+
+TEST(collisionWithXZyPlane, whenBallMeetsWall_ExpectCollision)
+{
+    objectPosition currentPosition;
+
+}
+TEST(collisionWithYZxPlane, whenBallMeetsWall_ExpectCollision)
+{
+    objectPosition currentPosition;
+
+}
+
+TEST(checkLoseWhenBallStopsMovingInZ, whenBallLosesVerticalVelocity_ExpectLose)
+{
+
+}
+TEST(checkLoseWhenBallMovingPositiveInZ, whenBallHasVerticalVelocity_ExpectNoLose)
+{
+
+}
+TEST(checkLoseWhenBallMovingNegativeInZ, whenBallHasVerticalVelocity_ExpectNoLose)
+{
+
+}
+
+TEST(checkIfBallIsInGoal, whenBallInGoal_ExpectWin)
+{
+
+}
+TEST(checkIfBallNotInGoal, whenBallNotInGoal_ExpectNoWin)
+{
+
+}
+
+TEST(osgVecFromStdVector, whenConvertfromVectorToVec_ExpectValidTransfer)
+{
+
+}
+
